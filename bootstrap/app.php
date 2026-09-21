@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\BlockDemoEmailAuth;
 use App\Http\Middleware\RequireProSubscription;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -19,7 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(SecurityHeaders::class);
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
+            'demo-email-auth' => BlockDemoEmailAuth::class,
             'guest' => RedirectIfAuthenticated::class,
             'pro' => RequireProSubscription::class,
             'role' => RoleMiddleware::class,

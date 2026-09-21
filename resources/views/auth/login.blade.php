@@ -10,6 +10,10 @@
 
     <x-oauth-buttons />
 
+    @if (config('demo.oauth_only'))
+        <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">New to the public demo? Continue with Google or GitHub. Email signup and password reset are disabled here because this demo does not send email. Private staff accounts can still sign in below.</p>
+    @endif
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
@@ -41,7 +45,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
+            @if (! config('demo.oauth_only') && Route::has('password.request'))
                 <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>

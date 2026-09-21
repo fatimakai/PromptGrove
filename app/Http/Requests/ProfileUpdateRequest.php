@@ -25,6 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
+                ...(config('demo.oauth_only') ? [Rule::in([$this->user()->email])] : []),
             ],
         ];
     }

@@ -32,9 +32,10 @@ Route::middleware('guest')->group(function () {
         ->name('oauth.callback');
 
     Route::get('register', [RegisteredUserController::class, 'create'])
+        ->middleware('demo-email-auth')
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store'])->middleware('demo-email-auth');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -42,15 +43,19 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->middleware('demo-email-auth')
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('demo-email-auth')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->middleware('demo-email-auth')
         ->name('password.reset');
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->middleware('demo-email-auth')
         ->name('password.store');
 });
 

@@ -17,7 +17,7 @@
                 <a href="{{ route('dashboard') }}" class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-950">Dashboard</a>
             @else
                 <a href="{{ route('login') }}" class="text-sm text-gray-300 hover:text-white">Log in</a>
-                <a href="{{ route('register') }}" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold hover:bg-indigo-400">Get started</a>
+                <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold hover:bg-indigo-400">Get started</a>
             @endauth
         </nav>
     </header>
@@ -29,7 +29,7 @@
             <p class="mx-auto mt-7 max-w-2xl text-lg leading-8 text-gray-300">Store, discover, test, and refine the prompts behind your AI products—all in one searchable library.</p>
             <div class="mt-10 flex justify-center gap-4">
                 <a href="{{ route('prompts.index') }}" class="rounded-lg bg-indigo-500 px-6 py-3 font-semibold hover:bg-indigo-400">Explore the library</a>
-                @guest<a href="{{ route('register') }}" class="rounded-lg border border-gray-700 px-6 py-3 font-semibold hover:border-gray-500">Create your workspace</a>@endguest
+                @guest<a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="rounded-lg border border-gray-700 px-6 py-3 font-semibold hover:border-gray-500">{{ config('demo.oauth_only') ? 'Continue with Google or GitHub' : 'Create your workspace' }}</a>@endguest
             </div>
         </section>
 

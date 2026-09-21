@@ -1,5 +1,7 @@
 # PromptForge
 
+For the Render Free + Aiven public-demo deployment, see [the Phase 10 deployment guide](docs/DEPLOYMENT.md). The [case-study draft](docs/CASE_STUDY.md) is intentionally unpublished until live integrations are verified.
+
 PromptForge is a collaborative library for creating, discovering, and refining prompts used with large language models. It is built with Laravel 12 and Livewire 3.
 
 For a codebase-learning walkthrough, see the five end-to-end Mermaid diagrams and file-by-file responsibility maps in [`docs/ARCHITECTURE_FLOWS.md`](docs/ARCHITECTURE_FLOWS.md).

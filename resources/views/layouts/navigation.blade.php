@@ -24,7 +24,7 @@
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-sm font-medium text-gray-500 hover:text-red-600">Log out</button></form>
                 @else
                     <a href="{{ route('login') }}" class="text-sm font-semibold text-gray-700 dark:text-gray-200">Log in</a>
-                    <a href="{{ route('register') }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Get started</a>
+                    <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Get started</a>
                 @endauth
             </div>
 
@@ -46,7 +46,7 @@
                 <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-sm font-medium text-red-600">Log out</button></form>
             @else
                 <a href="{{ route('login') }}" class="block text-sm font-medium">Log in</a>
-                <a href="{{ route('register') }}" class="block text-sm font-medium text-indigo-600">Create account</a>
+                <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="block text-sm font-medium text-indigo-600">{{ config('demo.oauth_only') ? 'Continue with OAuth' : 'Create account' }}</a>
             @endauth
         </div>
     </div>

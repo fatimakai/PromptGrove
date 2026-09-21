@@ -50,7 +50,9 @@ class OAuthController extends Controller
 
         if ($user->wasRecentlyCreated) {
             event(new Registered($user));
-            SendWelcomeEmailJob::dispatch($user);
+            if (! config('demo.oauth_only')) {
+                SendWelcomeEmailJob::dispatch($user);
+            }
         }
 
         return $login->login($request, $user);
