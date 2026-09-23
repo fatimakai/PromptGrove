@@ -1,10 +1,10 @@
-# PromptForge security summary
+# PromptGrove security summary
 
 This document records the Phase 9 OWASP hardening review. It describes controls present in the application, their boundaries, and the deployment settings that remain the operator's responsibility. It is not a claim of formal certification or a substitute for an independent penetration test.
 
 ## Security model
 
-PromptForge stores user-authored prompts, private collection membership, API tokens, OAuth identities, encrypted two-factor secrets, and sandbox subscription state. The primary threats considered are broken object-level authorization, cross-site scripting through prompt content, forged state-changing requests or billing callbacks, credential/session theft, AI-cost abuse, invite-token disclosure, and audit-log injection or flooding.
+PromptGrove stores user-authored prompts, private collection membership, API tokens, OAuth identities, encrypted two-factor secrets, and sandbox subscription state. The primary threats considered are broken object-level authorization, cross-site scripting through prompt content, forged state-changing requests or billing callbacks, credential/session theft, AI-cost abuse, invite-token disclosure, and audit-log injection or flooding.
 
 ## Implemented controls
 
@@ -50,7 +50,7 @@ PromptForge stores user-authored prompts, private collection membership, API tok
 - Browser routes use Laravel's `web` middleware group and CSRF token validation. Every state-changing Blade form includes `@csrf`; Livewire also uses Laravel's CSRF protection.
 - Billing webhooks deliberately live in `routes/api.php`, outside cookie-authenticated browser CSRF. They use provider-specific cryptographic signature verification and idempotent provider event IDs instead. Invalid signatures are rejected before subscription state changes.
 - Razorpay is restricted to `rzp_test_` credentials and PayPal to the sandbox host. Checkout callbacks are signature checked and provider state is fetched server-to-server before Pro access is granted.
-- No card data is collected, processed, or stored by PromptForge.
+- No card data is collected, processed, or stored by PromptGrove.
 
 ### Browser and transport headers
 

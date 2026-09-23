@@ -25,7 +25,7 @@ class RazorpaySubscriptionGateway
             'total_count' => max(1, (int) config('billing.razorpay.total_count')),
             'quantity' => 1,
             'customer_notify' => true,
-            'notes' => ['promptforge_user_id' => (string) $user->id],
+            'notes' => ['promptgrove_user_id' => (string) $user->id],
         ])->throw()->json();
     }
 

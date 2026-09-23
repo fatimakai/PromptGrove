@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'PromptForge'),
+    'name' => env('APP_NAME', 'PromptGrove'),
 
     /*
     |--------------------------------------------------------------------------

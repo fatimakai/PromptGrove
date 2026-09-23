@@ -1,10 +1,10 @@
-# PromptForge public demo deployment (Phase 10)
+# PromptGrove public demo deployment (Phase 10)
 
 This is a sandbox-only portfolio deployment. It is not a production billing or email setup. Never share keys in chat or commit them to Git.
 
 ## 1. Prepare the services
 
-1. Push the deployment files to a Git repository. Create a separate free Render Hobby workspace for PromptForge.
+1. Push the deployment files to a Git repository. Create a separate free Render Hobby workspace for PromptGrove.
 2. In Aiven, create a free MySQL service. Copy the host, port, database (`defaultdb` unless you created another), username, password, and CA certificate from Aiven's console. Leave the database publicly reachable only as required by Aiven's free plan, and use TLS verification below.
 3. In Render, create a Web Service from this repository: **Runtime: Docker; Dockerfile Path: `./Dockerfile`; Root Directory: repository root; Plan: Free; Health Check Path: `/up`**. Leave Docker Command empty so the image's entrypoint starts Apache. The container listens on port `10000` and runs migrations and the safe demo seeder on every start. Free services do not provide a pre-deploy migration step.
 4. The first deployment can be configured with the final Render URL (`https://YOUR-SERVICE.onrender.com`) before the service becomes healthy. Render creates the URL in the service configuration. Record it for OAuth callbacks and billing webhooks.
@@ -15,7 +15,7 @@ Enter these directly in Render's Environment tab. Generate a stable `APP_KEY` lo
 
 | Variable | Value / purpose |
 | --- | --- |
-| `APP_NAME` | `PromptForge` |
+| `APP_NAME` | `PromptGrove` |
 | `APP_ENV` | `production` |
 | `APP_DEBUG` | `false` |
 | `APP_KEY` | A unique `base64:...` key, kept secret and stable |
@@ -65,6 +65,6 @@ Payment access is activated only after verified provider callbacks/webhooks. Do 
 
 ## Local verification and limits
 
-Run `php artisan test` and `npm run build` before pushing. The Docker image can be tested locally with `docker build -t promptforge-demo .` when Docker Desktop is running. The container will refuse production startup without complete environment settings and a reachable Aiven MySQL service. Local development via Sail remains separate and continues using the usual `.env` and `DatabaseSeeder`.
+Run `php artisan test` and `npm run build` before pushing. The Docker image can be tested locally with `docker build -t promptgrove-demo .` when Docker Desktop is running. The container will refuse production startup without complete environment settings and a reachable Aiven MySQL service. Local development via Sail remains separate and continues using the usual `.env` and `DatabaseSeeder`.
 
 The public demo deliberately omits outbound email. Password registration, verification, reset, and welcome mail remain in the codebase and tests, but real delivery requires a verified sender domain and a configured mail transport. Collection sharing uses copyable invitation links. Render Free has no persistent disk, no separate free background worker, and no free pre-deploy command; the startup migration strategy assumes this single-instance demo, not a multi-instance production rollout.

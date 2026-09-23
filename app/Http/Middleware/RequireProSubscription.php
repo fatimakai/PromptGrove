@@ -15,7 +15,7 @@ class RequireProSubscription
         }
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'A PromptForge Pro subscription is required.'], 402);
+            return response()->json(['message' => 'A PromptGrove Pro subscription is required.'], 402);
         }
 
         return redirect()->route('billing.index')->with('error', 'Upgrade to Pro to use that feature.');

@@ -65,7 +65,7 @@ class BillingController extends Controller
             $subscriptions->sync($subscription, $gateway->fetch($subscription->provider_subscription_id));
 
             return to_route('billing.index')->with('success', $subscription->fresh()->grantsProAccess()
-                ? 'PromptForge Pro is now active.'
+                ? 'PromptGrove Pro is now active.'
                 : 'Payment authorization succeeded. Pro will activate when Razorpay confirms the subscription.');
         } catch (Throwable $exception) {
             return $this->failure($exception, 'Razorpay could not confirm the subscription.');
@@ -102,7 +102,7 @@ class BillingController extends Controller
             $subscriptions->sync($subscription, $gateway->fetch($subscriptionId));
 
             return to_route('billing.index')->with('success', $subscription->fresh()->grantsProAccess()
-                ? 'PromptForge Pro is now active.'
+                ? 'PromptGrove Pro is now active.'
                 : 'PayPal approval was received. Pro will activate after PayPal confirms the subscription.');
         } catch (Throwable $exception) {
             return $this->failure($exception, 'PayPal could not confirm the subscription.');

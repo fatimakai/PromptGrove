@@ -35,7 +35,7 @@ class WelcomeEmailTest extends TestCase
 
         (new SendWelcomeEmailJob($user))->handle();
 
-        Mail::assertSent(WelcomeMail::class, fn ($mail) => $mail->hasTo('alice@example.com') && $mail->envelope()->subject === 'Welcome to PromptForge'
+        Mail::assertSent(WelcomeMail::class, fn ($mail) => $mail->hasTo('alice@example.com') && $mail->envelope()->subject === 'Welcome to PromptGrove'
         );
         $this->assertStringContainsString('Alice Smith', (new WelcomeMail($user))->render());
     }

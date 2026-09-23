@@ -21,9 +21,9 @@ class DemoDeploymentSeeder extends Seeder
 
         // Never run DatabaseSeeder in public: it creates known-password accounts.
         $author = User::query()->firstOrCreate(
-            ['email' => 'library@promptforge.invalid'],
+            ['email' => 'library@promptgrove.invalid'],
             [
-                'name' => 'PromptForge Library',
+                'name' => 'PromptGrove Library',
                 'password' => Hash::make(Str::random(64)),
             ],
         );
@@ -70,7 +70,7 @@ class DemoDeploymentSeeder extends Seeder
             }
 
             $user ??= User::query()->create([
-                'name' => 'PromptForge '.ucfirst($key),
+                'name' => 'PromptGrove '.ucfirst($key),
                 'email' => $email,
                 'password' => Hash::make($password),
             ]);

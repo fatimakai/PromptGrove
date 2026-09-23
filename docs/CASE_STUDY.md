@@ -1,6 +1,6 @@
-# PromptForge case study (draft — publish after live verification)
+# PromptGrove case study (draft — publish after live verification)
 
-PromptForge is a Laravel 12 and MySQL prompt library for individuals and lightweight teams. It supports versioned prompts, public discovery, shared collections with Owner/Editor/Viewer permissions, AI-assisted analysis through OpenRouter, Google/GitHub OAuth, custom TOTP/recovery-code two-factor authentication, a token-authenticated API, and sandbox Pro checkout through Razorpay or PayPal.
+PromptGrove is a Laravel 12 and MySQL prompt library for individuals and lightweight teams. It supports versioned prompts, public discovery, shared collections with Owner/Editor/Viewer permissions, AI-assisted analysis through OpenRouter, Google/GitHub OAuth, custom TOTP/recovery-code two-factor authentication, a token-authenticated API, and sandbox Pro checkout through Razorpay or PayPal.
 
 The project began as a code-snippet manager and was rebuilt around prompt workflows. A prompt has one ownership context: personal, public, or one shared collection. Plan entitlements gate version history and collections; role policies and audited collection mutations protect shared work. The security pass addresses authorization, input validation, rate limits on AI cost, security headers, signed billing callbacks, and replay-resistant webhooks. See `SECURITY.md` and `docs/ARCHITECTURE_FLOWS.md` for the detailed decisions and end-to-end flows.
 

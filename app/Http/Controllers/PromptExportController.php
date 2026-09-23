@@ -19,7 +19,7 @@ class PromptExportController extends Controller
 
     public function all(): StreamedResponse
     {
-        $filename = 'promptforge-export-'.now()->format('Y-m-d-His').'.json';
+        $filename = 'promptgrove-export-'.now()->format('Y-m-d-His').'.json';
 
         return response()->streamDownload(function (): void {
             echo json_encode(

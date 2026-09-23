@@ -100,7 +100,7 @@ class TwoFactorAuthenticationService
 
         try {
             $uri = $this->google2fa->getQRCodeUrl(
-                config('app.name', 'PromptForge'),
+                config('app.name', 'PromptGrove'),
                 $user->email,
                 $user->two_factor_secret,
             );

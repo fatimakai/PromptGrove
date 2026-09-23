@@ -1,7 +1,7 @@
 <section @if($hasActive) wire:poll.3s @endif class="rounded-xl border border-indigo-200 bg-white p-6 shadow-sm dark:border-indigo-900 dark:bg-gray-800" aria-labelledby="ai-analysis-heading">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="max-w-2xl">
-            <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">PromptForge AI</p>
+            <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">PromptGrove AI</p>
             <h2 id="ai-analysis-heading" class="mt-1 text-xl font-bold text-gray-900 dark:text-white">Analyze and improve this prompt</h2>
             <p class="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">Get an intent summary, concrete weaknesses, and a rewritten prompt tailored to {{ $prompt->target_model }}.</p>
         </div>

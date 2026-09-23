@@ -59,7 +59,7 @@ class DemoDeploymentTest extends TestCase
         $this->assertSame(3, User::query()->count());
         $this->assertTrue(User::query()->where('email', 'owner@example.com')->firstOrFail()->hasRole(PlatformRoleService::ADMIN));
         $this->assertTrue(User::query()->where('email', 'moderator@example.com')->firstOrFail()->hasRole(PlatformRoleService::MODERATOR));
-        $this->assertTrue(User::query()->where('email', 'library@promptforge.invalid')->firstOrFail()->hasVerifiedEmail());
+        $this->assertTrue(User::query()->where('email', 'library@promptgrove.invalid')->firstOrFail()->hasVerifiedEmail());
         $this->assertTrue(Hash::check('a-strong-private-admin-secret', User::query()->where('email', 'owner@example.com')->firstOrFail()->password));
     }
 

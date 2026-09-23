@@ -1,8 +1,8 @@
-# PromptForge
+# PromptGrove
 
 For the Render Free + Aiven public-demo deployment, see [the Phase 10 deployment guide](docs/DEPLOYMENT.md). The [case-study draft](docs/CASE_STUDY.md) is intentionally unpublished until live integrations are verified.
 
-PromptForge is a collaborative library for creating, discovering, and refining prompts used with large language models. It is built with Laravel 12 and Livewire 3.
+PromptGrove is a collaborative library for creating, discovering, and refining prompts used with large language models. It is built with Laravel 12 and Livewire 3.
 
 For a codebase-learning walkthrough, see the five end-to-end Mermaid diagrams and file-by-file responsibility maps in [`docs/ARCHITECTURE_FLOWS.md`](docs/ARCHITECTURE_FLOWS.md).
 
@@ -59,7 +59,7 @@ php artisan queue:work
 
 To enable AI analysis, set `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL`. `PROMPT_ANALYSIS_PER_HOUR` controls the Free per-user hourly cost limit, `PROMPT_ANALYSIS_PRO_PER_HOUR` controls Pro, and `PROMPT_ANALYSIS_BURST_PER_MINUTE` defaults to three for both plans.
 
-PromptForge Pro costs $9/month USD in the demo and raises the AI quota from 5 to 25 analyses per hour while unlocking version history and shared collections. Billing is intentionally sandbox-only: configure `RAZORPAY_KEY_ID` with an `rzp_test_` key plus a Razorpay plan/webhook secret, and configure PayPal sandbox credentials, plan ID, and webhook ID. Point gateway webhooks to `/api/webhooks/razorpay` and `/api/webhooks/paypal`.
+PromptGrove Pro costs $9/month USD in the demo and raises the AI quota from 5 to 25 analyses per hour while unlocking version history and shared collections. Billing is intentionally sandbox-only: configure `RAZORPAY_KEY_ID` with an `rzp_test_` key plus a Razorpay plan/webhook secret, and configure PayPal sandbox credentials, plan ID, and webhook ID. Point gateway webhooks to `/api/webhooks/razorpay` and `/api/webhooks/paypal`.
 
 Create one recurring monthly plan for exactly USD 9.00 in each sandbox before adding its ID to `.env`. For Razorpay, subscribe the test webhook to the `subscription.authenticated`, `subscription.activated`, `subscription.charged`, `subscription.pending`, `subscription.halted`, `subscription.cancelled`, `subscription.completed`, and `subscription.expired` events. For PayPal, subscribe to the `BILLING.SUBSCRIPTION.ACTIVATED`, `UPDATED`, `SUSPENDED`, `CANCELLED`, and `EXPIRED` events. Checkout callbacks are verified and re-fetched from the provider; webhook signatures and event IDs are verified before local access changes.
 
@@ -67,7 +67,7 @@ To enable social login, create OAuth applications with Google and GitHub, then s
 
 Two-factor authentication can be enabled from the profile page. Secrets and hashed recovery codes are encrypted at rest. The default login challenge expires after five minutes and allows five failed attempts per minute; both limits are configurable in `.env.example`.
 
-`php artisan db:seed` creates portfolio accounts for `demo@promptforge.test`, `moderator@promptforge.test`, and `admin@promptforge.test`; the factory password is `password`. Platform roles use Spatie Laravel Permission. Collection invites expire after seven days and expose the raw token only once.
+`php artisan db:seed` creates portfolio accounts for `demo@promptgrove.test`, `moderator@promptgrove.test`, and `admin@promptgrove.test`; the factory password is `password`. Platform roles use Spatie Laravel Permission. Collection invites expire after seven days and expose the raw token only once.
 
 ## Tests
 

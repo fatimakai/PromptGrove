@@ -19,13 +19,13 @@ class DatabaseSeeder extends Seeder
         $roles->ensure();
 
         $demo = User::factory()->create([
-            'name' => 'PromptForge Demo',
-            'email' => 'demo@promptforge.test',
+            'name' => 'PromptGrove Demo',
+            'email' => 'demo@promptgrove.test',
         ]);
         $demo->assignRole(PlatformRoleService::USER);
-        User::factory()->create(['name' => 'PromptForge Admin', 'email' => 'admin@promptforge.test'])
+        User::factory()->create(['name' => 'PromptGrove Admin', 'email' => 'admin@promptgrove.test'])
             ->assignRole(PlatformRoleService::ADMIN);
-        User::factory()->create(['name' => 'PromptForge Moderator', 'email' => 'moderator@promptforge.test'])
+        User::factory()->create(['name' => 'PromptGrove Moderator', 'email' => 'moderator@promptgrove.test'])
             ->assignRole(PlatformRoleService::MODERATOR);
         $creators = User::factory(5)->create()->push($demo);
         $creators->each(function (User $user): void {
@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
             $user->subscriptions()->create([
                 'provider' => Subscription::PROVIDER_PAYPAL,
                 'provider_subscription_id' => 'I-DEMO-'.str_pad((string) $user->id, 8, '0', STR_PAD_LEFT),
-                'provider_plan_id' => 'P-PROMPTFORGE-DEMO',
+                'provider_plan_id' => 'P-PROMPTGROVE-DEMO',
                 'status' => Subscription::STATUS_ACTIVE,
                 'amount' => 900,
                 'currency' => 'USD',

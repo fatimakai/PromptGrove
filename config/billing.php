@@ -2,7 +2,7 @@
 
 return [
     'plan' => [
-        'name' => 'PromptForge Pro',
+        'name' => 'PromptGrove Pro',
         'amount' => 900,
         'currency' => 'USD',
         'interval' => 'month',

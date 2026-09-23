@@ -32,7 +32,7 @@ class BillingTest extends TestCase
             'billing.paypal.client_id' => 'paypal-client',
             'billing.paypal.client_secret' => 'paypal-secret',
             'billing.paypal.plan_id' => 'P-PRO-MONTHLY',
-            'billing.paypal.webhook_id' => 'WH-PROMPTFORGE',
+            'billing.paypal.webhook_id' => 'WH-PROMPTGROVE',
             'prompt-analysis.per_hour' => 5,
             'prompt-analysis.pro_per_hour' => 25,
         ]);
@@ -97,12 +97,12 @@ class BillingTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('billing.razorpay'))
-            ->assertOk()->assertViewIs('billing.razorpay-checkout')->assertSee('sub_promptforge');
+            ->assertOk()->assertViewIs('billing.razorpay-checkout')->assertSee('sub_promptgrove');
 
         $this->assertDatabaseHas('subscriptions', [
             'user_id' => $user->id,
             'provider' => Subscription::PROVIDER_RAZORPAY,
-            'provider_subscription_id' => 'sub_promptforge',
+            'provider_subscription_id' => 'sub_promptgrove',
             'status' => 'created',
         ]);
         Http::assertSent(fn (ClientRequest $request) => $request->url() === 'https://razorpay.test/v1/subscriptions'
@@ -116,7 +116,7 @@ class BillingTest extends TestCase
         $user = User::factory()->create();
         $subscription = Subscription::factory()->for($user)->create([
             'provider' => Subscription::PROVIDER_RAZORPAY,
-            'provider_subscription_id' => 'sub_promptforge',
+            'provider_subscription_id' => 'sub_promptgrove',
             'provider_plan_id' => 'plan_1234567890abcd',
         ]);
         $paymentId = 'pay_sandbox';
@@ -144,15 +144,15 @@ class BillingTest extends TestCase
         $attacker = User::factory()->create();
         Subscription::factory()->for($owner)->create([
             'provider' => Subscription::PROVIDER_RAZORPAY,
-            'provider_subscription_id' => 'sub_promptforge',
+            'provider_subscription_id' => 'sub_promptgrove',
             'provider_plan_id' => 'plan_1234567890abcd',
         ]);
         $paymentId = 'pay_sandbox';
-        $signature = hash_hmac('sha256', $paymentId.'|sub_promptforge', 'razor-secret');
+        $signature = hash_hmac('sha256', $paymentId.'|sub_promptgrove', 'razor-secret');
 
         $this->actingAs($attacker)->post(route('billing.razorpay.confirm'), [
             'razorpay_payment_id' => $paymentId,
-            'razorpay_subscription_id' => 'sub_promptforge',
+            'razorpay_subscription_id' => 'sub_promptgrove',
             'razorpay_signature' => $signature,
         ])->assertNotFound();
         Http::assertNothingSent();
@@ -167,12 +167,12 @@ class BillingTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)->post(route('billing.paypal'))
-            ->assertRedirect('https://www.sandbox.paypal.com/approve/I-PROMPTFORGE');
+            ->assertRedirect('https://www.sandbox.paypal.com/approve/I-PROMPTGROVE');
 
         $this->assertDatabaseHas('subscriptions', [
             'user_id' => $user->id,
             'provider' => Subscription::PROVIDER_PAYPAL,
-            'provider_subscription_id' => 'I-PROMPTFORGE',
+            'provider_subscription_id' => 'I-PROMPTGROVE',
         ]);
         Http::assertSent(fn (ClientRequest $request) => $request->url() === 'https://paypal.test/v1/billing/subscriptions'
             && $request->hasHeader('Authorization', 'Bearer sandbox-token')
@@ -187,11 +187,11 @@ class BillingTest extends TestCase
         ]);
         $user = User::factory()->create();
         Subscription::factory()->for($user)->create([
-            'provider_subscription_id' => 'I-PROMPTFORGE',
+            'provider_subscription_id' => 'I-PROMPTGROVE',
             'provider_plan_id' => 'P-PRO-MONTHLY',
         ]);
 
-        $this->actingAs($user)->get(route('billing.paypal.return', ['subscription_id' => 'I-PROMPTFORGE']))
+        $this->actingAs($user)->get(route('billing.paypal.return', ['subscription_id' => 'I-PROMPTGROVE']))
             ->assertRedirect(route('billing.index'));
 
         $this->assertTrue($user->isPro());
@@ -202,7 +202,7 @@ class BillingTest extends TestCase
         $user = User::factory()->create();
         $subscription = Subscription::factory()->for($user)->create([
             'provider' => Subscription::PROVIDER_RAZORPAY,
-            'provider_subscription_id' => 'sub_promptforge',
+            'provider_subscription_id' => 'sub_promptgrove',
             'provider_plan_id' => 'plan_1234567890abcd',
         ]);
         $payload = [
@@ -238,7 +238,7 @@ class BillingTest extends TestCase
         ]);
         $user = User::factory()->create();
         $subscription = Subscription::factory()->for($user)->create([
-            'provider_subscription_id' => 'I-PROMPTFORGE',
+            'provider_subscription_id' => 'I-PROMPTGROVE',
             'provider_plan_id' => 'P-PRO-MONTHLY',
         ]);
         $payload = [
@@ -268,7 +268,7 @@ class BillingTest extends TestCase
         $user = User::factory()->create();
         $subscription = Subscription::factory()->for($user)->active()->create([
             'provider' => Subscription::PROVIDER_RAZORPAY,
-            'provider_subscription_id' => 'sub_promptforge',
+            'provider_subscription_id' => 'sub_promptgrove',
             'provider_plan_id' => 'plan_1234567890abcd',
         ]);
 
@@ -292,7 +292,7 @@ class BillingTest extends TestCase
     private function razorpaySubscription(string $status): array
     {
         return [
-            'id' => 'sub_promptforge',
+            'id' => 'sub_promptgrove',
             'plan_id' => 'plan_1234567890abcd',
             'status' => $status,
             'current_start' => now()->subDay()->timestamp,
@@ -303,13 +303,13 @@ class BillingTest extends TestCase
     private function paypalSubscription(string $status): array
     {
         return [
-            'id' => 'I-PROMPTFORGE',
+            'id' => 'I-PROMPTGROVE',
             'plan_id' => 'P-PRO-MONTHLY',
             'status' => $status,
             'start_time' => now()->subDay()->toIso8601String(),
             'billing_info' => ['next_billing_time' => now()->addMonth()->toIso8601String()],
             'links' => [[
-                'href' => 'https://www.sandbox.paypal.com/approve/I-PROMPTFORGE',
+                'href' => 'https://www.sandbox.paypal.com/approve/I-PROMPTGROVE',
                 'rel' => 'approve',
                 'method' => 'GET',
             ]],

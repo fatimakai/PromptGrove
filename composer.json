@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "promptforge/promptforge",
+    "name": "promptgrove/promptgrove",
     "type": "project",
     "description": "A collaborative library for creating, discovering, and refining AI prompts.",
     "keywords": ["laravel", "framework"],

@@ -59,7 +59,7 @@ class PayPalSubscriptionGateway
     {
         $this->ensureConfigured();
         $this->client()->post('/v1/billing/subscriptions/'.rawurlencode($subscriptionId).'/cancel', [
-            'reason' => 'Cancelled by the customer in PromptForge.',
+            'reason' => 'Cancelled by the customer in PromptGrove.',
         ])->throw();
     }
 
