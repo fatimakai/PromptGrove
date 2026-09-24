@@ -11,9 +11,15 @@ use Illuminate\Support\Str;
 
 class PayPalSubscriptionGateway
 {
+    public function enabled(): bool
+    {
+        return (bool) config('billing.paypal.enabled');
+    }
+
     public function configured(): bool
     {
-        return filled(config('billing.paypal.client_id'))
+        return $this->enabled()
+            && filled(config('billing.paypal.client_id'))
             && filled(config('billing.paypal.client_secret'))
             && filled(config('billing.paypal.plan_id'));
     }
@@ -101,6 +107,10 @@ class PayPalSubscriptionGateway
 
     private function ensureConfigured(): void
     {
+        if (! $this->enabled()) {
+            throw new BillingException('PayPal sandbox checkout is disabled in this deployment.', 503);
+        }
+
         if (! $this->configured()) {
             throw new BillingException('PayPal sandbox is not configured. Add sandbox credentials and a plan ID.', 503);
         }

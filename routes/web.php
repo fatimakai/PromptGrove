@@ -71,6 +71,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/billing/razorpay/confirm', [BillingController::class, 'confirmRazorpay'])->name('billing.razorpay.confirm');
     Route::post('/billing/paypal', [BillingController::class, 'paypal'])->name('billing.paypal');
     Route::get('/billing/paypal/return', [BillingController::class, 'paypalReturn'])->name('billing.paypal.return');
+    Route::post('/billing/stripe', [BillingController::class, 'stripe'])->name('billing.stripe');
+    Route::get('/billing/stripe/return', [BillingController::class, 'stripeReturn'])->name('billing.stripe.return');
     Route::delete('/billing/subscriptions/{subscription}', [BillingController::class, 'cancel'])->name('billing.cancel');
 
     Route::middleware('permission:manage users')->group(function (): void {

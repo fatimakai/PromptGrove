@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\PaymentWebhookEvent;
 use App\Models\Subscription;
+use App\Models\User;
 use App\Services\PayPalSubscriptionGateway;
 use App\Services\RazorpaySubscriptionGateway;
+use App\Services\StripeSubscriptionGateway;
 use App\Services\SubscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +44,61 @@ class BillingWebhookController extends Controller
             str_starts_with((string) ($payload['event_type'] ?? ''), 'BILLING.SUBSCRIPTION.') ? ($payload['resource'] ?? null) : null,
             $subscriptions,
         );
+    }
+
+    public function stripe(Request $request, StripeSubscriptionGateway $gateway, SubscriptionService $subscriptions): JsonResponse
+    {
+        $event = $gateway->verifyWebhook($request->getContent(), $request->header('Stripe-Signature'));
+        abort_unless(is_array($event), 401);
+
+        $storedEvent = PaymentWebhookEvent::firstOrCreate(
+            ['provider' => Subscription::PROVIDER_STRIPE, 'event_id' => $event['id']],
+            ['event_type' => $event['type'], 'payload' => $request->json()->all()],
+        );
+
+        if (! $storedEvent->wasRecentlyCreated && $storedEvent->status === 'processed') {
+            return response()->json(['received' => true]);
+        }
+
+        try {
+            $supportedTypes = [
+                'checkout.session.completed',
+                'customer.subscription.created',
+                'customer.subscription.updated',
+                'customer.subscription.deleted',
+                'invoice.paid',
+                'invoice.payment_failed',
+            ];
+            $subscriptionId = $event['subscription_id'];
+
+            if (in_array($event['type'], $supportedTypes, true) && is_string($subscriptionId)) {
+                $remote = $gateway->fetchSubscription($subscriptionId);
+                $subscription = Subscription::query()
+                    ->where('provider', Subscription::PROVIDER_STRIPE)
+                    ->where('provider_subscription_id', $subscriptionId)
+                    ->first();
+
+                if ($subscription) {
+                    $subscriptions->sync($subscription, $remote);
+                } else {
+                    $userId = $event['user_id'] ?? $remote['promptgrove_user_id'] ?? null;
+                    $user = is_numeric($userId) ? User::query()->find((int) $userId) : null;
+
+                    if ($user) {
+                        $subscriptions->createLocal($user, Subscription::PROVIDER_STRIPE, $remote);
+                    }
+                }
+            }
+
+            $storedEvent->update(['status' => 'processed', 'processed_at' => now(), 'failure_reason' => null]);
+
+            return response()->json(['received' => true]);
+        } catch (Throwable $exception) {
+            report($exception);
+            $storedEvent->update(['status' => 'failed', 'failure_reason' => 'Webhook processing failed.']);
+
+            return response()->json(['received' => false], 500);
+        }
     }
 
     private function process(

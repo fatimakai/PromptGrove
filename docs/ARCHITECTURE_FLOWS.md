@@ -536,20 +536,21 @@ sequenceDiagram
 | Analysis exception | `app/Exceptions/PromptAnalysisException.php` | Responsibility: carries a safe user-facing message and intended HTTP status across dispatcher/adapter/controller boundaries. Why separate: expected domain failures need controlled presentation distinct from unexpected stack traces. | Custom error contract |
 | Analysis schema extension | `database/migrations/2026_09_11_010000_add_source_context_to_prompt_analyses_table.php` | Responsibility: adds immutable source text/model and completion time required by queued before/after results. Why separate: it versions an analysis-storage change without rewriting the original domain migration. | Framework migration convention with deliberate snapshot design |
 
-## 5. Sandbox subscription checkout, verified callback, and idempotent webhook
+## 5. Test-mode subscription checkout, verified callback, and idempotent webhook
 
-This diagram includes both providers. Razorpay confirms the browser checkout with HMAC and then re-fetches the subscription. PayPal stores a pending ID in the session, only accepts a sandbox approval host, and also re-fetches subscription state. Webhooks are outside browser CSRF by design and use provider signatures instead.
+Stripe is the deployed demo provider: it uses hosted Checkout, binds each session to the signed-in user, re-fetches both Checkout and subscription state, and treats signed webhooks as the authoritative asynchronous path. Razorpay and PayPal remain complete, disabled provider adapters with mocked coverage; they are not provider-validated because sandbox signup is unavailable from Pakistan. Webhooks are outside browser CSRF by design and use provider signatures instead.
 
 ```mermaid
 sequenceDiagram
-    title Sandbox billing checkout and webhook reconciliation
+    title Test-mode billing checkout and webhook reconciliation
     participant Browser as "Browser — external, no repo file"
     participant WebRoutes as "Billing web routes — routes/web.php"
     participant ApiRoutes as "Webhook API routes — routes/api.php"
     participant Billing as "Billing controller — app/Http/Controllers/BillingController.php"
+    participant StripeGateway as "Stripe adapter — app/Services/StripeSubscriptionGateway.php"
     participant RazorpayGateway as "Razorpay adapter — app/Services/RazorpaySubscriptionGateway.php"
     participant PayPalGateway as "PayPal adapter — app/Services/PayPalSubscriptionGateway.php"
-    participant Provider as "Razorpay test or PayPal sandbox — external, no repo file"
+    participant Provider as "Stripe, Razorpay, or PayPal test provider — external, no repo file"
     participant SubscriptionService as "Subscription service — app/Services/SubscriptionService.php"
     participant SubscriptionModel as "Subscription model — app/Models/Subscription.php"
     participant CheckoutView as "Razorpay checkout view — resources/views/billing/razorpay-checkout.blade.php"
@@ -557,14 +558,60 @@ sequenceDiagram
     participant EventModel as "Webhook event model — app/Models/PaymentWebhookEvent.php"
     participant ProGate as "Pro middleware — app/Http/Middleware/RequireProSubscription.php"
 
-    Browser->>WebRoutes: POST /billing/razorpay or /billing/paypal with CSRF
+    Browser->>WebRoutes: POST /billing/stripe, /billing/razorpay, or /billing/paypal with CSRF
     WebRoutes->>WebRoutes: Require authenticated verified session and valid CSRF token
-    WebRoutes->>Billing: razorpay() or paypal()
+    WebRoutes->>Billing: stripe(), razorpay(), or paypal()
     Billing->>SubscriptionModel: Check user is not already Pro
     alt Already active and unexpired
         Billing-->>Browser: Redirect with already-active message
     else Upgrade allowed
-        alt Razorpay selected
+        alt Stripe selected (deployed demo)
+            Billing->>StripeGateway: createCheckout(user)
+            StripeGateway->>StripeGateway: Require enabled sk_test key and recurring price ID
+            alt Disabled, missing, or live configuration
+                StripeGateway-->>Billing: BillingException
+                Billing-->>Browser: Safe test-mode configuration error
+            else Test configuration valid
+                StripeGateway->>Provider: Create hosted subscription Checkout with user/price metadata and idempotency key
+                alt Provider failure or invalid Checkout URL
+                    Provider-->>StripeGateway: SDK exception, timeout, or invalid URL
+                    StripeGateway-->>Billing: Safe BillingException or provider exception
+                    Billing-->>Browser: Safe checkout failure
+                else Checkout session created
+                    Provider-->>StripeGateway: cs_test session and checkout.stripe.com URL
+                    StripeGateway-->>Billing: Normalized session ID and URL
+                    Billing-->>Browser: Redirect to hosted Stripe Checkout
+                    Browser->>Provider: Complete or cancel test checkout
+                    alt User cancels
+                        Provider-->>Browser: Return to /billing?cancelled=1 with no entitlement change
+                    else Checkout completes
+                        Provider-->>WebRoutes: GET /billing/stripe/return?session_id=cs_test...
+                        WebRoutes->>Billing: stripeReturn(request)
+                        Billing->>Billing: Validate session_id shape
+                        Billing->>StripeGateway: fetchCheckout(session_id) with expanded subscription
+                        StripeGateway->>Provider: Retrieve Checkout Session server-to-server
+                        alt Fetch fails or session is incomplete/wrong mode/wrong user
+                            Provider-->>StripeGateway: Error or mismatched state
+                            Billing-->>Browser: Safe verification failure, no Pro access
+                        else Session belongs to signed-in user
+                            StripeGateway-->>Billing: Complete subscription session and subscription ID
+                            Billing->>StripeGateway: fetchSubscription(subscription_id)
+                            StripeGateway->>Provider: Retrieve authoritative current subscription
+                            alt Subscription fetch fails
+                                Provider-->>StripeGateway: Error or timeout
+                                Billing-->>Browser: Safe confirmation failure
+                            else Current subscription returned
+                                StripeGateway-->>Billing: Normalized ID, price, status, period, and user metadata
+                                Billing->>SubscriptionService: createLocal(user, stripe, remote)
+                                SubscriptionService->>SubscriptionService: Require exact configured price and prevent cross-user binding
+                                SubscriptionService->>SubscriptionModel: Upsert verified subscription and allowlisted metadata
+                                Billing-->>Browser: Redirect with active or pending result
+                            end
+                        end
+                    end
+                end
+            end
+        else Razorpay selected (disabled in deployed demo)
             Billing->>RazorpayGateway: create(user)
             RazorpayGateway->>RazorpayGateway: Require rzp_test key, secret, and valid plan ID
             alt Missing or live/malformed configuration
@@ -620,7 +667,7 @@ sequenceDiagram
                     end
                 end
             end
-        else PayPal selected
+        else PayPal selected (disabled in deployed demo)
             Billing->>PayPalGateway: create(user)
             PayPalGateway->>PayPalGateway: Require sandbox credentials and plan
             PayPalGateway->>Provider: OAuth client credentials token request
@@ -690,9 +737,11 @@ sequenceDiagram
         end
     end
 
-    Provider->>ApiRoutes: POST /api/webhooks/razorpay or /api/webhooks/paypal
+    Provider->>ApiRoutes: POST /api/webhooks/stripe, /razorpay, or /paypal
     ApiRoutes->>Webhook: Route through API stack without cookie CSRF
-    alt Razorpay webhook
+    alt Stripe webhook
+        Webhook->>StripeGateway: Verify Stripe-Signature over timestamp plus raw body
+    else Razorpay webhook
         Webhook->>RazorpayGateway: Verify X-Razorpay-Signature HMAC over raw body
     else PayPal webhook
         Webhook->>PayPalGateway: Send transmission headers and event to verification API
@@ -701,7 +750,7 @@ sequenceDiagram
     end
     alt Signature verification returns invalid
         Webhook-->>Provider: 401, no event processing
-    else PayPal verification request throws
+    else Provider verification request throws
         Webhook-->>Provider: Unhandled 5xx, no event row, provider may retry
     else Authentic webhook
         Webhook->>EventModel: firstOrCreate unique provider plus event ID with payload
@@ -709,9 +758,18 @@ sequenceDiagram
             EventModel-->>Webhook: Existing processed row
             Webhook-->>Provider: 200 received, no duplicate mutation
         else New or retryable event
-            Webhook->>SubscriptionModel: Find local subscription by provider and remote ID
-            opt Known local subscription payload
-                Webhook->>SubscriptionService: sync(local, remote payload)
+            alt Stripe lifecycle event with subscription ID
+                Webhook->>StripeGateway: fetchSubscription(subscription_id)
+                StripeGateway->>Provider: Retrieve current authoritative subscription state
+                Webhook->>SubscriptionModel: Find Stripe subscription or resolve user from signed metadata
+                Webhook->>SubscriptionService: Sync existing or create verified local subscription
+            else Razorpay or PayPal lifecycle payload
+                Webhook->>SubscriptionModel: Find local subscription by provider and remote ID
+                opt Known local subscription payload
+                    Webhook->>SubscriptionService: sync(local, remote payload)
+                end
+            end
+            opt Subscription state is available
                 SubscriptionService->>SubscriptionService: Recheck exact subscription ID and plan
                 SubscriptionService->>SubscriptionModel: Normalize status, dates, cancellation, safe metadata
             end
@@ -735,13 +793,14 @@ sequenceDiagram
 
 | Diagram Component | File Path | Responsibility | Boilerplate or Custom? |
 |---|---|---|---|
-| Browser | External; no repository file | Responsibility: starts a sandbox checkout, follows hosted-provider redirects, and returns provider identifiers/signatures through CSRF-protected browser routes. Why separate: browser-returned billing data is untrusted until cryptographic and server-to-server checks pass. | External system |
+| Browser | External; no repository file | Responsibility: starts a test checkout, follows hosted-provider redirects, and returns provider identifiers/signatures through CSRF-protected browser routes. Why separate: browser-returned billing data is untrusted until cryptographic and server-to-server checks pass. | External system |
 | Billing web routes | `routes/web.php` | Responsibility: exposes checkout, confirmation, return, and cancellation under authenticated/verified web middleware and CSRF. Why separate: browser billing actions use session identity and HTML redirects. | Framework routing convention with custom billing endpoints |
 | Webhook API routes | `routes/api.php` | Responsibility: exposes provider callbacks outside cookie-CSRF middleware. Why separate: providers cannot submit a browser CSRF token, so authenticity is established by provider signatures instead. | Deliberate security boundary using framework routing |
 | Billing controller | `app/Http/Controllers/BillingController.php` | Responsibility: prevents duplicate upgrades, validates callbacks, binds provider IDs to the signed-in user's local subscription, re-fetches provider state, cancels subscriptions, and returns safe errors. Why separate: browser/session orchestration should not contain provider protocol or status-normalization logic. | Custom business orchestration |
+| Stripe adapter | `app/Services/StripeSubscriptionGateway.php` | Responsibility: enforces test credentials, creates idempotent hosted Checkout sessions, allowlists the redirect host, re-fetches Checkout/subscription state, verifies Stripe webhook signatures, normalizes current billing periods, and cancels subscriptions. Why separate: Stripe SDK objects, Checkout identity rules, and signature semantics are provider-specific. | Custom external-service adapter using the official Stripe SDK and a deliberate test-only guard |
 | Razorpay adapter | `app/Services/RazorpaySubscriptionGateway.php` | Responsibility: enforces test-key/plan format, calls subscription APIs, verifies checkout HMAC, verifies raw-body webhook HMAC, and applies HTTP timeouts. Why separate: Razorpay authentication and signature rules are provider-specific. | Custom external-service adapter and deliberate sandbox guard |
 | PayPal adapter | `app/Services/PayPalSubscriptionGateway.php` | Responsibility: obtains sandbox OAuth tokens, creates/fetches/cancels subscriptions, allowlists approval hosts, and verifies webhook signatures through PayPal. Why separate: PayPal's protocol differs materially from Razorpay and can evolve independently. | Custom external-service adapter and deliberate sandbox guard |
-| Razorpay test or PayPal sandbox | External; no repository file | Responsibility: hosts checkout, owns authoritative subscription status, and signs/sends webhook events. Why separate: PromptGrove does not collect card data or trust browser claims about payment state. | External systems |
+| Stripe, Razorpay, or PayPal test provider | External; no repository file | Responsibility: hosts checkout, owns authoritative subscription status, and signs/sends webhook events. Why separate: PromptGrove does not collect card data or trust browser claims about payment state. | External systems |
 | Subscription service | `app/Services/SubscriptionService.php` | Responsibility: verifies provider/plan identity, prevents cross-user binding, maps provider statuses/periods, and persists only allowlisted metadata. Why separate: both gateways and webhook/browser paths must use one entitlement-normalization contract. | Custom business logic and deliberate anti-confusion boundary |
 | Subscription model | `app/Models/Subscription.php` | Responsibility: stores the local provider record and grants Pro only for active status with a future period end. Why separate: provider synchronization history is separate from the user record and can support multiple attempts/providers. | Custom domain model |
 | Razorpay checkout view | `resources/views/billing/razorpay-checkout.blade.php` | Responsibility: launches hosted Razorpay test checkout and posts returned IDs/signature into the CSRF-protected confirmation route. Why separate: provider JavaScript belongs at the presentation edge, while verification stays server-side. | Custom presentation integration |
@@ -749,7 +808,7 @@ sequenceDiagram
 | Webhook event model | `app/Models/PaymentWebhookEvent.php` | Responsibility: stores provider event IDs, payloads, processing state, generic failures, and timestamps for idempotency/audit. Why separate: provider delivery attempts need their own unique lifecycle apart from subscriptions. | Deliberate idempotency model |
 | Pro middleware | `app/Http/Middleware/RequireProSubscription.php` | Responsibility: turns the synchronized subscription record into route access, with distinct HTML and JSON denial responses. Why separate: feature controllers should not each reimplement plan gating. | Custom entitlement middleware |
 | Billing exception | `app/Exceptions/BillingException.php` | Responsibility: carries expected safe billing failures and statuses without exposing raw provider exceptions to users. Why separate: operational/provider errors need controlled presentation distinct from programming failures. | Custom error contract |
-| Billing configuration | `config/billing.php` | Responsibility: fixes the portfolio plan at USD 9/month, pins Razorpay/PayPal sandbox endpoints, and maps environment credentials/IDs. Why separate: deploy-time provider settings and the sandbox-only guard must not be hardcoded across services. | Custom configuration and deliberate sandbox decision |
+| Billing configuration | `config/billing.php` | Responsibility: fixes the portfolio plan at USD 9/month, enables Stripe for the hosted demo, disables Razorpay/PayPal there, and maps provider credentials/IDs. Why separate: deploy-time provider settings and the test-only guard must not be hardcoded across services. | Custom configuration and deliberate test-mode decision |
 | Billing schema | `database/migrations/2026_09_11_050000_create_billing_tables.php` | Responsibility: enforces unique provider subscription IDs and unique provider/event IDs while indexing webhook processing state. Why separate: database constraints provide the final defense against duplicate links and deliveries. | Custom schema in framework migration |
 
 ## Cross-flow architectural takeaways

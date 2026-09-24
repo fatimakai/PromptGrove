@@ -9,9 +9,15 @@ use Illuminate\Support\Facades\Http;
 
 class RazorpaySubscriptionGateway
 {
+    public function enabled(): bool
+    {
+        return (bool) config('billing.razorpay.enabled');
+    }
+
     public function configured(): bool
     {
-        return str_starts_with((string) config('billing.razorpay.key_id'), 'rzp_test_')
+        return $this->enabled()
+            && str_starts_with((string) config('billing.razorpay.key_id'), 'rzp_test_')
             && filled(config('billing.razorpay.key_secret'))
             && preg_match('/^plan_[A-Za-z0-9]{14}$/', (string) config('billing.razorpay.plan_id')) === 1;
     }
@@ -60,7 +66,10 @@ class RazorpaySubscriptionGateway
     {
         $secret = (string) config('billing.razorpay.webhook_secret');
 
-        return $secret !== '' && is_string($signature) && hash_equals(hash_hmac('sha256', $rawBody, $secret), $signature);
+        return $this->enabled()
+            && $secret !== ''
+            && is_string($signature)
+            && hash_equals(hash_hmac('sha256', $rawBody, $secret), $signature);
     }
 
     private function client(): PendingRequest
@@ -72,6 +81,10 @@ class RazorpaySubscriptionGateway
 
     private function ensureConfigured(): void
     {
+        if (! $this->enabled()) {
+            throw new BillingException('Razorpay sandbox checkout is disabled in this deployment.', 503);
+        }
+
         if (! $this->configured()) {
             throw new BillingException('Razorpay sandbox is not configured. Add a test key and plan ID.', 503);
         }

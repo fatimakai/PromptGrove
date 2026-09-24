@@ -18,7 +18,9 @@ class SubscriptionService
             throw new BillingException('The payment provider returned an incomplete subscription.');
         }
 
-        $expectedPlan = config("billing.{$provider}.plan_id");
+        $expectedPlan = $provider === Subscription::PROVIDER_STRIPE
+            ? config('billing.stripe.price_id')
+            : config("billing.{$provider}.plan_id");
         if (! is_string($expectedPlan) || ! hash_equals($expectedPlan, $planId)) {
             throw new BillingException('The payment provider returned an unexpected plan.', 422);
         }
@@ -76,6 +78,7 @@ class SubscriptionService
             'cancelled', 'canceled' => 'cancelled',
             'suspended', 'halted', 'pending' => strtolower((string) $status),
             'expired', 'completed' => strtolower((string) $status),
+            'trialing', 'past_due', 'incomplete', 'incomplete_expired', 'unpaid', 'paused' => strtolower((string) $status),
             'approved', 'authenticated' => 'approved',
             default => 'created',
         };
@@ -83,7 +86,7 @@ class SubscriptionService
 
     private function periodDate(string $provider, array $remote, string $boundary): ?CarbonImmutable
     {
-        if ($provider === Subscription::PROVIDER_RAZORPAY) {
+        if (in_array($provider, [Subscription::PROVIDER_RAZORPAY, Subscription::PROVIDER_STRIPE], true)) {
             $value = $remote[$boundary === 'start' ? 'current_start' : 'current_end'] ?? null;
 
             return is_numeric($value) && (int) $value > 0 ? CarbonImmutable::createFromTimestamp((int) $value) : null;
@@ -101,6 +104,7 @@ class SubscriptionService
         return collect($remote)->only([
             'id', 'status', 'plan_id', 'quantity', 'start_time', 'current_start', 'current_end',
             'charge_at', 'paid_count', 'remaining_count', 'short_url',
+            'cancel_at_period_end', 'customer_id', 'promptgrove_user_id',
         ])->all();
     }
 }

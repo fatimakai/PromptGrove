@@ -6,6 +6,7 @@ use App\Exceptions\BillingException;
 use App\Models\Subscription;
 use App\Services\PayPalSubscriptionGateway;
 use App\Services\RazorpaySubscriptionGateway;
+use App\Services\StripeSubscriptionGateway;
 use App\Services\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,53 @@ class BillingController extends Controller
             'activeSubscription' => $activeSubscription,
             'razorpayConfigured' => app(RazorpaySubscriptionGateway::class)->configured(),
             'paypalConfigured' => app(PayPalSubscriptionGateway::class)->configured(),
+            'stripeConfigured' => app(StripeSubscriptionGateway::class)->configured(),
         ]);
+    }
+
+    public function stripe(Request $request, StripeSubscriptionGateway $gateway): RedirectResponse
+    {
+        if ($request->user()->isPro()) {
+            return to_route('billing.index')->with('success', 'Your Pro subscription is already active.');
+        }
+
+        try {
+            $checkout = $gateway->createCheckout($request->user());
+
+            return redirect()->away($checkout['url']);
+        } catch (Throwable $exception) {
+            return $this->failure($exception, 'Stripe test checkout could not be started.');
+        }
+    }
+
+    public function stripeReturn(
+        Request $request,
+        StripeSubscriptionGateway $gateway,
+        SubscriptionService $subscriptions,
+    ): RedirectResponse {
+        $data = $request->validate(['session_id' => ['required', 'string', 'max:255']]);
+
+        try {
+            $checkout = $gateway->fetchCheckout($data['session_id']);
+            if (($checkout['status'] ?? null) !== 'complete'
+                || ($checkout['mode'] ?? null) !== 'subscription'
+                || ! hash_equals((string) $request->user()->id, (string) ($checkout['client_reference_id'] ?? ''))
+                || ! is_string($checkout['subscription_id'] ?? null)) {
+                throw new BillingException('Stripe Checkout verification failed.', 422);
+            }
+
+            $subscription = $subscriptions->createLocal(
+                $request->user(),
+                Subscription::PROVIDER_STRIPE,
+                $gateway->fetchSubscription($checkout['subscription_id']),
+            );
+
+            return to_route('billing.index')->with('success', $subscription->grantsProAccess()
+                ? 'PromptGrove Pro is now active.'
+                : 'Stripe Checkout completed. Pro will activate after Stripe confirms the subscription.');
+        } catch (Throwable $exception) {
+            return $this->failure($exception, 'Stripe could not confirm the subscription.');
+        }
     }
 
     public function razorpay(Request $request, RazorpaySubscriptionGateway $gateway, SubscriptionService $subscriptions): View|RedirectResponse
@@ -114,6 +161,7 @@ class BillingController extends Controller
         Subscription $subscription,
         RazorpaySubscriptionGateway $razorpay,
         PayPalSubscriptionGateway $paypal,
+        StripeSubscriptionGateway $stripe,
         SubscriptionService $subscriptions,
     ): RedirectResponse {
         abort_unless($subscription->user_id === $request->user()->id, 404);
@@ -126,6 +174,10 @@ class BillingController extends Controller
                     $razorpay->cancel($subscription->provider_subscription_id),
                 ),
                 Subscription::PROVIDER_PAYPAL => $this->cancelPayPal($subscription, $paypal),
+                Subscription::PROVIDER_STRIPE => $subscriptions->sync(
+                    $subscription,
+                    $stripe->cancel($subscription->provider_subscription_id),
+                ),
                 default => throw new BillingException('This payment provider is not supported.', 422),
             };
 

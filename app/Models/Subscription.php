@@ -14,6 +14,8 @@ class Subscription extends Model
 
     public const PROVIDER_PAYPAL = 'paypal';
 
+    public const PROVIDER_STRIPE = 'stripe';
+
     public const STATUS_ACTIVE = 'active';
 
     protected $fillable = [

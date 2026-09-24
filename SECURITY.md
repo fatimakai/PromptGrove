@@ -49,14 +49,14 @@ PromptGrove stores user-authored prompts, private collection membership, API tok
 
 - Browser routes use Laravel's `web` middleware group and CSRF token validation. Every state-changing Blade form includes `@csrf`; Livewire also uses Laravel's CSRF protection.
 - Billing webhooks deliberately live in `routes/api.php`, outside cookie-authenticated browser CSRF. They use provider-specific cryptographic signature verification and idempotent provider event IDs instead. Invalid signatures are rejected before subscription state changes.
-- Razorpay is restricted to `rzp_test_` credentials and PayPal to the sandbox host. Checkout callbacks are signature checked and provider state is fetched server-to-server before Pro access is granted.
+- Stripe is restricted to `sk_test_` credentials and is the deployed demo provider. Razorpay is restricted to `rzp_test_` credentials and PayPal to the sandbox host; both are disabled in the hosted demo because sandbox signup is unavailable from Pakistan. Checkout callbacks are identity checked, provider state is fetched server-to-server, and signed webhooks are deduplicated before Pro access changes.
 - No card data is collected, processed, or stored by PromptGrove.
 
 ### Browser and transport headers
 
 All responses receive `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 0`, `Referrer-Policy: same-origin`, a restrictive Permissions Policy, `Cross-Origin-Opener-Policy: same-origin-allow-popups`, and a CSP baseline that locks `base-uri`, `form-action`, `frame-ancestors`, and `object-src` to safe values. Authenticated responses use private/no-store caching.
 
-HSTS is emitted only for HTTPS requests in production, with a one-year duration and subdomains. This avoids poisoning local HTTP development while ensuring deployed browsers remain on HTTPS. A full script/style source CSP is deferred because Livewire/Alpine and the hosted Razorpay checkout require a tested nonce-based rollout; the current enforced baseline does not claim to mitigate every script-injection path.
+HSTS is emitted only for HTTPS requests in production, with a one-year duration and subdomains. This avoids poisoning local HTTP development while ensuring deployed browsers remain on HTTPS. A full script/style source CSP is deferred because Livewire/Alpine and optional provider checkout integrations require a tested nonce-based rollout; the current enforced baseline does not claim to mitigate every script-injection path.
 
 ### Secrets, errors, and dependencies
 
@@ -77,7 +77,7 @@ HSTS is emitted only for HTTPS requests in production, with a one-year duration 
 
 ## Residual risks and follow-up work
 
-- The enforced CSP is a safe baseline, not a complete source allowlist. A nonce-based CSP with deployed violation reporting should be tested across Livewire, Alpine, Vite, OAuth, and Razorpay before tightening `script-src`, `style-src`, `connect-src`, and `frame-src`.
+- The enforced CSP is a safe baseline, not a complete source allowlist. A nonce-based CSP with deployed violation reporting should be tested across Livewire, Alpine, Vite, OAuth, and enabled payment-provider redirects before tightening `script-src`, `style-src`, `connect-src`, and `frame-src`.
 - Database audit records are application-append-only but are not cryptographically tamper-evident. A real production system should ship them to restricted centralized storage and alert on logging failures.
 - Rate limiting reduces automated abuse but is not bot detection. Distributed deployments must use a shared cache such as Redis.
 - Collection access logs contain IP addresses and user agents. A production privacy policy must define lawful basis, access, retention, and deletion rules.

@@ -18,7 +18,7 @@ For a codebase-learning walkthrough, see the five end-to-end Mermaid diagrams an
 - Admin, Moderator, and User platform roles with permission-gated management screens
 - Private shared collections with Owner, Editor, and Viewer membership roles
 - Expiring invite links stored as hashes, plus prompt reporting and moderation
-- Sandbox Pro subscriptions through Razorpay or PayPal with signed, idempotent webhooks
+- Test-mode Pro subscriptions through provider-isolated Stripe, Razorpay, and PayPal adapters with signed, idempotent webhooks; the hosted demo exposes Stripe only
 - OWASP-oriented hardening with shared prompt validation, AI burst limits, security headers, and collection audit logs
 - Community upvotes and personal bookmarks
 - Policy-based personal and shared prompt editing and deletion
@@ -59,9 +59,9 @@ php artisan queue:work
 
 To enable AI analysis, set `OPENROUTER_API_KEY` and optionally `OPENROUTER_MODEL`. `PROMPT_ANALYSIS_PER_HOUR` controls the Free per-user hourly cost limit, `PROMPT_ANALYSIS_PRO_PER_HOUR` controls Pro, and `PROMPT_ANALYSIS_BURST_PER_MINUTE` defaults to three for both plans.
 
-PromptGrove Pro costs $9/month USD in the demo and raises the AI quota from 5 to 25 analyses per hour while unlocking version history and shared collections. Billing is intentionally sandbox-only: configure `RAZORPAY_KEY_ID` with an `rzp_test_` key plus a Razorpay plan/webhook secret, and configure PayPal sandbox credentials, plan ID, and webhook ID. Point gateway webhooks to `/api/webhooks/razorpay` and `/api/webhooks/paypal`.
+PromptGrove Pro costs $9/month USD in the demo and raises the AI quota from 5 to 25 analyses per hour while unlocking version history and shared collections. Billing is intentionally test-mode only. The hosted portfolio demo sets `STRIPE_ENABLED=true`, `PAYPAL_ENABLED=false`, and `RAZORPAY_ENABLED=false`, so Stripe Checkout is its only functional payment flow. Razorpay and PayPal remain fully implemented and covered by mocked feature tests, but neither has been validated against its provider sandbox because developer-account signup is unavailable from Pakistan. Provider webhooks use `/api/webhooks/stripe`, `/api/webhooks/paypal`, and `/api/webhooks/razorpay`.
 
-Create one recurring monthly plan for exactly USD 9.00 in each sandbox before adding its ID to `.env`. For Razorpay, subscribe the test webhook to the `subscription.authenticated`, `subscription.activated`, `subscription.charged`, `subscription.pending`, `subscription.halted`, `subscription.cancelled`, `subscription.completed`, and `subscription.expired` events. For PayPal, subscribe to the `BILLING.SUBSCRIPTION.ACTIVATED`, `UPDATED`, `SUSPENDED`, `CANCELLED`, and `EXPIRED` events. Checkout callbacks are verified and re-fetched from the provider; webhook signatures and event IDs are verified before local access changes.
+For the deployed demo, create a recurring Stripe test Price for exactly USD 9.00/month and subscribe its webhook to `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, and `invoice.payment_failed`. The Stripe flow uses hosted Checkout, re-fetches Checkout and subscription state server-side, verifies Stripe signatures, and deduplicates event IDs before changing local access. The retained PayPal adapter expects `BILLING.SUBSCRIPTION.ACTIVATED`, `UPDATED`, `SUSPENDED`, `CANCELLED`, and `EXPIRED`. The retained Razorpay adapter expects `subscription.authenticated`, `activated`, `charged`, `pending`, `halted`, `cancelled`, `completed`, and `expired`.
 
 To enable social login, create OAuth applications with Google and GitHub, then set their client IDs, client secrets, and callback URLs from `.env.example`. The local callbacks are `${APP_URL}/auth/google/callback` and `${APP_URL}/auth/github/callback`.
 
