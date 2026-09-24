@@ -28,6 +28,7 @@ if [ "${APP_ENV:-}" = production ]; then
         else
             echo 'Aiven CA decode check: PEM certificate header missing.' >&2
         fi
+        chown www-data:www-data /tmp/aiven-ca.pem
         chmod 600 /tmp/aiven-ca.pem
         export MYSQL_ATTR_SSL_CA=/tmp/aiven-ca.pem
     fi
