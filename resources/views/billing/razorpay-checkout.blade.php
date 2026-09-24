@@ -13,7 +13,7 @@
                 name: 'PromptGrove',
                 description: 'Pro monthly subscription (sandbox)',
                 prefill: { name: @js(auth()->user()->name), email: @js(auth()->user()->email) },
-                theme: { color: '#4f46e5' },
+                theme: { color: '#e6a73b' },
                 handler: function (response) {
                     const form = document.getElementById('razorpay-confirm');
                     form.elements.razorpay_payment_id.value = response.razorpay_payment_id;

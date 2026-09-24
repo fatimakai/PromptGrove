@@ -1,3 +1,6 @@
-<span {{ $attributes->merge(['class' => 'inline-flex items-center justify-center rounded-xl bg-indigo-600 font-black tracking-tight text-white']) }} aria-label="PromptGrove">
-    PF
-</span>
+<svg {{ $attributes->merge(['class' => 'grove-brand-mark']) }} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path class="grove-mark-g" d="M31.6 15.1C28.2 10.7 22.6 8.6 17.1 9.6C9.5 11 5.5 17.2 5.7 24.8C5.9 33.2 12.1 40.3 20.4 41.2C27.9 42 34.2 37.7 36 31.3" />
+    <path class="grove-mark-g" d="M22.7 29C27.3 27.9 31.7 27 36.2 26.5C36.6 31.2 36.8 36 36.9 40.7" />
+    <path class="grove-mark-leaf" d="M31.2 14.8C31.3 8.5 34.7 3.8 43.1 2.5C42.7 9.9 39 14.3 32.8 16.2L31.2 14.8Z" />
+    <path class="grove-mark-vein" d="M33.1 14.1C35.2 10.4 37.7 7.5 40.5 5.2" />
+</svg>

@@ -1,53 +1,57 @@
-<nav x-data="{ open: false }" class="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between">
-            <div class="flex items-center gap-8">
-                <a href="{{ route('home') }}" class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">Prompt<span class="text-indigo-600">Forge</span></a>
-                <div class="hidden items-center gap-6 sm:flex">
-                    <a href="{{ route('prompts.index') }}" class="text-sm font-medium {{ request()->routeIs('prompts.index') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Discover</a>
-                    @auth
-                        <a href="{{ route('dashboard') }}" class="text-sm font-medium {{ request()->routeIs('dashboard') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Dashboard</a>
-                        <a href="{{ route('prompts.mine') }}" class="text-sm font-medium {{ request()->routeIs('prompts.mine') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">My prompts</a>
-                        <a href="{{ route('prompts.bookmarked') }}" class="text-sm font-medium {{ request()->routeIs('prompts.bookmarked') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Bookmarks</a>
-                        <a href="{{ route('collections.index') }}" class="text-sm font-medium {{ request()->routeIs('collections.*') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Collections</a>
-                        <a href="{{ route('billing.index') }}" class="text-sm font-medium {{ request()->routeIs('billing.*') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">{{ auth()->user()->isPro() ? 'Pro' : 'Upgrade' }}</a>
-                        @can('moderate prompts')<a href="{{ route('moderation.index') }}" class="text-sm font-medium {{ request()->routeIs('moderation.*') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Moderate</a>@endcan
-                        @can('manage users')<a href="{{ route('admin.users.index') }}" class="text-sm font-medium {{ request()->routeIs('admin.*') ? 'text-indigo-600' : 'text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white' }}">Admin</a>@endcan
-                    @endauth
-                </div>
-            </div>
+<nav x-data="{ open: false }" class="grove-app-nav">
+    <div class="grove-shell grove-nav-inner">
+        <div class="flex min-w-0 items-center gap-8">
+            <a class="grove-brand" href="{{ route('home') }}" aria-label="PromptGrove home">
+                <x-application-logo aria-hidden="true" />
+                <span>PromptGrove</span>
+            </a>
 
-            <div class="hidden items-center gap-3 sm:flex">
+            <div class="grove-nav-links" aria-label="Primary navigation">
+                <a href="{{ route('prompts.index') }}" class="grove-nav-link {{ request()->routeIs('prompts.index') ? 'is-active' : '' }}">Discover</a>
                 @auth
-                    <a href="{{ route('prompts.create') }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500">New prompt</a>
-                    <a href="{{ route('profile.edit') }}" class="text-sm font-medium text-gray-600 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white">{{ auth()->user()->name }}</a>
-                    <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-sm font-medium text-gray-500 hover:text-red-600">Log out</button></form>
-                @else
-                    <a href="{{ route('login') }}" class="text-sm font-semibold text-gray-700 dark:text-gray-200">Log in</a>
-                    <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Get started</a>
+                    <a href="{{ route('dashboard') }}" class="grove-nav-link {{ request()->routeIs('dashboard') ? 'is-active' : '' }}">Dashboard</a>
+                    <a href="{{ route('prompts.mine') }}" class="grove-nav-link {{ request()->routeIs('prompts.mine') ? 'is-active' : '' }}">My prompts</a>
+                    <a href="{{ route('prompts.bookmarked') }}" class="grove-nav-link {{ request()->routeIs('prompts.bookmarked') ? 'is-active' : '' }}">Bookmarks</a>
+                    <a href="{{ route('collections.index') }}" class="grove-nav-link {{ request()->routeIs('collections.*') ? 'is-active' : '' }}">Collections</a>
+                    <a href="{{ route('billing.index') }}" class="grove-nav-link {{ request()->routeIs('billing.*') ? 'is-active' : '' }}">{{ auth()->user()->isPro() ? 'Pro' : 'Upgrade' }}</a>
+                    @can('moderate prompts')<a href="{{ route('moderation.index') }}" class="grove-nav-link {{ request()->routeIs('moderation.*') ? 'is-active' : '' }}">Moderate</a>@endcan
+                    @can('manage users')<a href="{{ route('admin.users.index') }}" class="grove-nav-link {{ request()->routeIs('admin.*') ? 'is-active' : '' }}">Admin</a>@endcan
                 @endauth
             </div>
-
-            <button type="button" @click="open = !open" class="rounded-md p-2 sm:hidden" aria-label="Toggle navigation">☰</button>
         </div>
 
-        <div x-show="open" x-cloak class="space-y-3 border-t border-gray-200 py-4 sm:hidden dark:border-gray-700">
-            <a href="{{ route('prompts.index') }}" class="block text-sm font-medium">Discover</a>
+        <div class="grove-nav-account flex items-center gap-4">
             @auth
-                <a href="{{ route('dashboard') }}" class="block text-sm font-medium">Dashboard</a>
-                <a href="{{ route('prompts.mine') }}" class="block text-sm font-medium">My prompts</a>
-                <a href="{{ route('prompts.bookmarked') }}" class="block text-sm font-medium">Bookmarks</a>
-                <a href="{{ route('collections.index') }}" class="block text-sm font-medium">Collections</a>
-                <a href="{{ route('billing.index') }}" class="block text-sm font-medium">{{ auth()->user()->isPro() ? 'Pro plan' : 'Upgrade to Pro' }}</a>
-                @can('moderate prompts')<a href="{{ route('moderation.index') }}" class="block text-sm font-medium">Moderate</a>@endcan
-                @can('manage users')<a href="{{ route('admin.users.index') }}" class="block text-sm font-medium">Admin</a>@endcan
-                <a href="{{ route('prompts.create') }}" class="block text-sm font-medium text-indigo-600">New prompt</a>
-                <a href="{{ route('profile.edit') }}" class="block text-sm font-medium">Profile</a>
-                <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-sm font-medium text-red-600">Log out</button></form>
+                <a href="{{ route('prompts.create') }}" class="grove-nav-action">New prompt <span aria-hidden="true">&plus;</span></a>
+                <a href="{{ route('profile.edit') }}" class="grove-nav-link {{ request()->routeIs('profile.*') ? 'is-active' : '' }}">{{ auth()->user()->name }}</a>
+                <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-xs font-semibold text-gray-500 hover:text-red-700">Log out</button></form>
             @else
-                <a href="{{ route('login') }}" class="block text-sm font-medium">Log in</a>
-                <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="block text-sm font-medium text-indigo-600">{{ config('demo.oauth_only') ? 'Continue with OAuth' : 'Create account' }}</a>
+                <a href="{{ route('login') }}" class="grove-nav-link">Log in</a>
+                <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="grove-nav-action">Get started <span aria-hidden="true">&rarr;</span></a>
             @endauth
         </div>
+
+        <button type="button" @click="open = !open" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-900 lg:hidden" aria-label="Toggle navigation" :aria-expanded="open">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+    </div>
+
+    <div x-show="open" x-cloak class="grove-shell space-y-3 border-t border-gray-300 py-5 lg:hidden">
+        <a href="{{ route('prompts.index') }}" class="block text-sm font-semibold">Discover</a>
+        @auth
+            <a href="{{ route('dashboard') }}" class="block text-sm font-semibold">Dashboard</a>
+            <a href="{{ route('prompts.mine') }}" class="block text-sm font-semibold">My prompts</a>
+            <a href="{{ route('prompts.bookmarked') }}" class="block text-sm font-semibold">Bookmarks</a>
+            <a href="{{ route('collections.index') }}" class="block text-sm font-semibold">Collections</a>
+            <a href="{{ route('billing.index') }}" class="block text-sm font-semibold">{{ auth()->user()->isPro() ? 'Pro plan' : 'Upgrade to Pro' }}</a>
+            @can('moderate prompts')<a href="{{ route('moderation.index') }}" class="block text-sm font-semibold">Moderate</a>@endcan
+            @can('manage users')<a href="{{ route('admin.users.index') }}" class="block text-sm font-semibold">Admin</a>@endcan
+            <a href="{{ route('prompts.create') }}" class="block text-sm font-semibold text-amber-800">New prompt</a>
+            <a href="{{ route('profile.edit') }}" class="block text-sm font-semibold">Profile</a>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button class="text-sm font-semibold text-red-700">Log out</button></form>
+        @else
+            <a href="{{ route('login') }}" class="block text-sm font-semibold">Log in</a>
+            <a href="{{ config('demo.oauth_only') ? route('login') : route('register') }}" class="block text-sm font-semibold text-amber-800">{{ config('demo.oauth_only') ? 'Continue with OAuth' : 'Create account' }}</a>
+        @endauth
     </div>
 </nav>
