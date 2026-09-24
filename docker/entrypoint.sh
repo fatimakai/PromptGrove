@@ -22,6 +22,12 @@ if [ "${APP_ENV:-}" = production ]; then
             exit 1
         fi
         printf '%s' "$AIVEN_CA_CERT_BASE64" | base64 -d > /tmp/aiven-ca.pem
+        aiven_pem_header="$(head -n 1 /tmp/aiven-ca.pem | tr -d '\r')"
+        if [ "$aiven_pem_header" = '-----BEGIN CERTIFICATE-----' ]; then
+            echo 'Aiven CA decode check: PEM certificate header present.'
+        else
+            echo 'Aiven CA decode check: PEM certificate header missing.' >&2
+        fi
         chmod 600 /tmp/aiven-ca.pem
         export MYSQL_ATTR_SSL_CA=/tmp/aiven-ca.pem
     fi
