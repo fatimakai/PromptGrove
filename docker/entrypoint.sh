@@ -21,10 +21,20 @@ if [ "${APP_ENV:-}" = production ]; then
             echo 'Aiven CA certificate is required: set AIVEN_CA_CERT_BASE64 or MYSQL_ATTR_SSL_CA.' >&2
             exit 1
         fi
-        printf '%s' "$AIVEN_CA_CERT_BASE64" | base64 -d > /tmp/aiven-ca.pem
-        chown www-data:www-data /tmp/aiven-ca.pem
-        chmod 600 /tmp/aiven-ca.pem
-        export MYSQL_ATTR_SSL_CA=/tmp/aiven-ca.pem
+        aiven_ca_path="$(mktemp /tmp/aiven-ca.XXXXXX.pem)"
+        if ! printf '%s' "$AIVEN_CA_CERT_BASE64" | base64 -d > "$aiven_ca_path"; then
+            rm -f "$aiven_ca_path"
+            echo 'Aiven CA certificate could not be decoded.' >&2
+            exit 1
+        fi
+        if [ "$(head -n 1 "$aiven_ca_path")" != '-----BEGIN CERTIFICATE-----' ]; then
+            rm -f "$aiven_ca_path"
+            echo 'Decoded Aiven CA certificate is not a PEM certificate.' >&2
+            exit 1
+        fi
+        chown www-data:www-data "$aiven_ca_path"
+        chmod 600 "$aiven_ca_path"
+        export MYSQL_ATTR_SSL_CA="$aiven_ca_path"
     fi
     if [ ! -s "$MYSQL_ATTR_SSL_CA" ]; then
         echo 'Aiven CA certificate file is missing or empty.' >&2
