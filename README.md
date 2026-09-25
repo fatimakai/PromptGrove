@@ -1,6 +1,6 @@
 # PromptGrove
 
-For the Render Free + Aiven public-demo deployment, see [the Phase 10 deployment guide](docs/DEPLOYMENT.md). The [case-study draft](docs/CASE_STUDY.md) is intentionally unpublished until live integrations are verified.
+[Live demo](https://promptgrove-2hfa.onrender.com) · [Case study](docs/CASE_STUDY.md) · [Architecture walkthrough](docs/ARCHITECTURE_FLOWS.md) · [Deployment guide](docs/DEPLOYMENT.md)
 
 PromptGrove is a collaborative library for creating, discovering, and refining prompts used with large language models. It is built with Laravel 12 and Livewire 3.
 
